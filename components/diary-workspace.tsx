@@ -2,8 +2,20 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import {
+  AlertCircle,
+  Check,
+  FilePenLine,
+  LoaderCircle,
+  Plus,
+  Sparkles,
+  X,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { DiaryEntry, Mood } from "@/lib/types";
@@ -114,22 +126,34 @@ export function DiaryWorkspace({ entries }: { entries: DiaryEntry[] }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(280px,360px)_1fr]">
-      <section className="h-fit rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-        <div className="mb-5">
-          <h2 className="text-lg font-semibold text-zinc-950">
-            {editingEntry ? "Edit entry" : "Create entry"}
-          </h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            Capture the title, mood, and what happened.
-          </p>
-        </div>
+    <div className="grid gap-6 lg:grid-cols-[minmax(300px,400px)_1fr] lg:items-start">
+      <Card className="sticky top-6 h-fit overflow-hidden">
+        <CardHeader className="border-b border-zinc-100 bg-zinc-50/70">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <Badge>
+                <Sparkles aria-hidden="true" className="size-3.5" />
+                Writer
+              </Badge>
+              <h2 className="mt-4 text-xl font-semibold tracking-tight text-zinc-950">
+                {editingEntry ? "Refine this entry" : "Create a new entry"}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-zinc-500">
+                Capture the title, mood, and the details worth remembering.
+              </p>
+            </div>
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 text-white shadow-sm">
+              <FilePenLine aria-hidden="true" className="size-5" />
+            </div>
+          </div>
+        </CardHeader>
 
-        <form className="grid gap-4" onSubmit={handleSubmit}>
+        <CardContent className="pt-6">
+        <form className="grid gap-5" onSubmit={handleSubmit}>
           <div>
-            <label className="mb-2 block text-sm font-medium" htmlFor="title">
+            <Label htmlFor="title">
               Title
-            </label>
+            </Label>
             <Input
               id="title"
               maxLength={120}
@@ -146,9 +170,9 @@ export function DiaryWorkspace({ entries }: { entries: DiaryEntry[] }) {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium" htmlFor="mood">
+            <Label htmlFor="mood">
               Mood
-            </label>
+            </Label>
             <Select
               id="mood"
               onChange={(event) =>
@@ -168,9 +192,9 @@ export function DiaryWorkspace({ entries }: { entries: DiaryEntry[] }) {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium" htmlFor="content">
+            <Label htmlFor="content">
               Content
-            </label>
+            </Label>
             <Textarea
               id="content"
               maxLength={5000}
@@ -187,13 +211,30 @@ export function DiaryWorkspace({ entries }: { entries: DiaryEntry[] }) {
           </div>
 
           {message ? (
-            <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-              {message}
-            </p>
+            <div
+              className="flex gap-3 rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-sm leading-6 text-red-700"
+              role="alert"
+            >
+              <AlertCircle
+                aria-hidden="true"
+                className="mt-0.5 size-4 shrink-0"
+              />
+              <p>{message}</p>
+            </div>
           ) : null}
 
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex flex-col gap-2 pt-1 sm:flex-row">
             <Button className="w-full" disabled={isSaving} type="submit">
+              {isSaving ? (
+                <LoaderCircle
+                  aria-hidden="true"
+                  className="size-4 animate-spin"
+                />
+              ) : editingEntry ? (
+                <Check aria-hidden="true" className="size-4" />
+              ) : (
+                <Plus aria-hidden="true" className="size-4" />
+              )}
               {isSaving
                 ? "Saving..."
                 : editingEntry
@@ -205,21 +246,37 @@ export function DiaryWorkspace({ entries }: { entries: DiaryEntry[] }) {
                 className="w-full"
                 onClick={resetForm}
                 type="button"
-                variant="outline"
+                variant="secondary"
               >
+                <X aria-hidden="true" className="size-4" />
                 Cancel
               </Button>
             ) : null}
           </div>
         </form>
-      </section>
+        </CardContent>
+      </Card>
 
-      <DiaryList
-        deletingId={deletingId}
-        entries={entries}
-        onDelete={handleDelete}
-        onEdit={startEditing}
-      />
+      <div className="grid gap-4">
+        <div className="flex flex-col gap-1 px-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight text-zinc-950">
+              Entries
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              Newest entries appear first.
+            </p>
+          </div>
+          <Badge>{entries.length} shown</Badge>
+        </div>
+
+        <DiaryList
+          deletingId={deletingId}
+          entries={entries}
+          onDelete={handleDelete}
+          onEdit={startEditing}
+        />
+      </div>
     </div>
   );
 }
