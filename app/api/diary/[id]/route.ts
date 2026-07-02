@@ -1,5 +1,6 @@
 import { deleteDiaryEntry, updateDiaryEntry } from "@/lib/diary";
 import { updateDiaryEntrySchema } from "@/lib/validation";
+import { revalidatePath } from "next/cache";
 
 export async function PATCH(
   request: Request,
@@ -10,6 +11,7 @@ export async function PATCH(
     const payload = updateDiaryEntrySchema.parse(await request.json());
     const entry = await updateDiaryEntry(id, payload);
 
+    revalidatePath("/");
     return Response.json({ entry });
   } catch (error) {
     return Response.json(
@@ -32,6 +34,7 @@ export async function DELETE(
     const { id } = await context.params;
     await deleteDiaryEntry(id);
 
+    revalidatePath("/");
     return Response.json({ ok: true });
   } catch (error) {
     return Response.json(

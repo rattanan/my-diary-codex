@@ -43,7 +43,7 @@ export default async function Home({
             </Link>
             <div className="flex items-center gap-2 text-sm text-zinc-500">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              Local JSON storage
+              Google Cloud Postgres
             </div>
           </nav>
 

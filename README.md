@@ -1,8 +1,8 @@
 # My Diary
 
-A simple local diary web app built with Next.js 16, TypeScript, Tailwind CSS, App Router, and shadcn-style UI components.
+A simple diary web app built with Next.js 16, TypeScript, Tailwind CSS, App Router, Prisma, and shadcn-style UI components.
 
-The app stores entries in a local JSON file instead of using a database. It is intentionally small, readable, and easy to run locally.
+The app stores entries in Google Cloud Postgres through Prisma. It is intentionally small, readable, and easy to run locally against a Postgres database.
 
 ## Features
 
@@ -21,20 +21,16 @@ The app stores entries in a local JSON file instead of using a database. It is i
 - TypeScript
 - Tailwind CSS 4
 - Zod for API request validation
-- Local JSON file storage with `fs/promises`
+- Prisma ORM with Postgres storage
 - shadcn-style reusable UI primitives
 
-## Local Storage
+## Database
 
-Diary entries are stored in:
+Diary entries are stored in a Postgres table named `diary_entries` through Prisma.
 
-```text
-data/diary.json
-```
+Set `DATABASE_URL` to your Google Cloud Postgres connection string before running the app.
 
-There is no Prisma setup and no database. The server reads and writes this file directly through `fs/promises`.
-
-If the JSON file is missing, the app recreates it with an empty diary. If the file contains invalid JSON or malformed entries, the app shows a friendly message instead of crashing.
+Prisma configuration lives in `prisma/schema.prisma` and `prisma.config.ts`.
 
 ## Getting Started
 
@@ -85,10 +81,11 @@ app/
 components/
   diary-*.tsx         Diary-specific UI
   ui/                 Reusable shadcn-style primitives
-data/
-  diary.json          Local diary entry storage
+prisma/
+  schema.prisma       Prisma schema for diary entries
 lib/
-  diary.ts            File-backed diary read/write helpers
+  diary.ts            Prisma-backed diary read/write helpers
+  prisma.ts           Shared Prisma client
   validation.ts       Zod schemas
   types.ts            Shared TypeScript types
 ```
@@ -108,4 +105,4 @@ type DiaryEntry = {
 
 ## Notes
 
-This app is designed for local use and learning. Because entries are stored in a JSON file, concurrent writes are not handled like they would be in a real database-backed application.
+This app is designed for local use and learning. Because entries are stored in Postgres, concurrent writes are handled by the database rather than the filesystem.
