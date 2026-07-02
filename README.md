@@ -1,8 +1,8 @@
 # My Diary
 
-A simple diary web app built with Next.js 16, TypeScript, Tailwind CSS, App Router, Prisma, and shadcn-style UI components.
+A simple diary web app built with Next.js 16, TypeScript, Tailwind CSS, App Router, Supabase, and shadcn-style UI components.
 
-The app stores entries in Google Cloud Postgres through Prisma. It is intentionally small, readable, and easy to run locally against a Postgres database.
+The app stores entries in a Supabase Postgres table and uses Supabase client helpers for server access. It is intentionally small, readable, and easy to run locally against a Supabase project.
 
 ## Features
 
@@ -11,7 +11,7 @@ The app stores entries in Google Cloud Postgres through Prisma. It is intentiona
 - Edit existing entries
 - Delete entries
 - Search entries by title
-- Friendly error messages for validation and file issues
+- Friendly error messages for validation and database issues
 - Responsive layout for desktop and mobile
 
 ## Tech Stack
@@ -21,16 +21,23 @@ The app stores entries in Google Cloud Postgres through Prisma. It is intentiona
 - TypeScript
 - Tailwind CSS 4
 - Zod for API request validation
-- Prisma ORM with Postgres storage
+- Supabase client access to Postgres storage
 - shadcn-style reusable UI primitives
 
 ## Database
 
-Diary entries are stored in a Postgres table named `diary_entries` through Prisma.
+Diary entries are stored in a Postgres table named `public.diary_entries`.
 
-Set `DATABASE_URL` to your Google Cloud Postgres connection string before running the app.
+Set these environment variables before running the app:
 
-Prisma configuration lives in `prisma/schema.prisma` and `prisma.config.ts`.
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://otqbdcpknvmvqalxjdks.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+The app reads and writes the table through `lib/supabase.ts` and `lib/diary.ts`.
+
+If your table uses RLS, add policies that allow the intended read/write access.
 
 ## Getting Started
 
@@ -54,12 +61,6 @@ http://localhost:3000
 
 ## Useful Commands
 
-Run TypeScript checks:
-
-```bash
-npx tsc --noEmit
-```
-
 Run linting:
 
 ```bash
@@ -81,13 +82,13 @@ app/
 components/
   diary-*.tsx         Diary-specific UI
   ui/                 Reusable shadcn-style primitives
-prisma/
-  schema.prisma       Prisma schema for diary entries
 lib/
-  diary.ts            Prisma-backed diary read/write helpers
-  prisma.ts           Shared Prisma client
+  diary.ts            Supabase-backed diary read/write helpers
+  supabase.ts         Shared Supabase client
   validation.ts       Zod schemas
   types.ts            Shared TypeScript types
+proxy.ts              Supabase session refresh proxy
+utils/supabase/       Supabase server/client helper wrappers
 ```
 
 ## Diary Entry Shape
@@ -105,4 +106,4 @@ type DiaryEntry = {
 
 ## Notes
 
-This app is designed for local use and learning. Because entries are stored in Postgres, concurrent writes are handled by the database rather than the filesystem.
+This app is designed for local use and learning. Because entries are stored in Supabase Postgres, concurrent writes are handled by the database rather than the filesystem.
