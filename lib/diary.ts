@@ -1,5 +1,4 @@
-import { Prisma } from "@prisma/client";
-import { prisma } from "./prisma";
+import { supabase } from "./supabase";
 import { moods, type DiaryEntry, type DiaryReadResult } from "./types";
 import type { DiaryEntryInput } from "./validation";
 
@@ -8,27 +7,41 @@ function toDiaryEntry(row: {
   title: string;
   content: string;
   mood: string;
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: string;
+  updated_at: string;
 }): DiaryEntry {
   return {
     id: row.id,
     title: row.title,
     content: row.content,
     mood: row.mood as (typeof moods)[number],
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
+    createdAt: new Date(row.created_at).toISOString(),
+    updatedAt: new Date(row.updated_at).toISOString(),
   };
 }
 
 export async function readDiaryEntries(): Promise<DiaryReadResult> {
   try {
-    const entries = await prisma.diaryEntry.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+    const { data, error } = await supabase
+      .from("diary_entries")
+      .select("id,title,content,mood,created_at,updated_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
 
     return {
-      entries: entries.map(toDiaryEntry),
+      entries: (data ?? []).map((entry) =>
+        toDiaryEntry(entry as {
+          id: string;
+          title: string;
+          content: string;
+          mood: string;
+          created_at: string;
+          updated_at: string;
+        }),
+      ),
     };
   } catch {
     return {
@@ -39,46 +52,80 @@ export async function readDiaryEntries(): Promise<DiaryReadResult> {
 }
 
 export async function createDiaryEntry(input: DiaryEntryInput) {
-  const entry = await prisma.diaryEntry.create({
-    data: input,
-  });
+  const now = new Date().toISOString();
+  const payload = {
+    id: crypto.randomUUID(),
+    ...input,
+    created_at: now,
+    updated_at: now,
+  };
 
-  return toDiaryEntry(entry);
+  const { data, error } = await supabase
+    .from("diary_entries")
+    .insert(payload)
+    .select("id,title,content,mood,created_at,updated_at")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return toDiaryEntry({
+    ...(data as {
+      id: string;
+      title: string;
+      content: string;
+      mood: string;
+      created_at: string;
+      updated_at: string;
+    }),
+  });
 }
 
 export async function updateDiaryEntry(id: string, input: DiaryEntryInput) {
-  try {
-    const entry = await prisma.diaryEntry.update({
-      where: { id },
-      data: input,
-    });
+  const { data, error } = await supabase
+    .from("diary_entries")
+    .update({
+      ...input,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select("id,title,content,mood,created_at,updated_at")
+    .maybeSingle();
 
-    return toDiaryEntry(entry);
-  } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
-      throw new Error("That diary entry could not be found.");
-    }
-
+  if (error) {
     throw error;
   }
+
+  if (!data) {
+    throw new Error("That diary entry could not be found.");
+  }
+
+  return toDiaryEntry({
+    ...(data as {
+      id: string;
+      title: string;
+      content: string;
+      mood: string;
+      created_at: string;
+      updated_at: string;
+    }),
+  });
 }
 
 export async function deleteDiaryEntry(id: string) {
-  try {
-    await prisma.diaryEntry.delete({
-      where: { id },
-    });
-  } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
-      throw new Error("That diary entry could not be found.");
-    }
+  const { data, error } = await supabase
+    .from("diary_entries")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
 
+  if (error) {
     throw error;
+  }
+
+  if (!data) {
+    throw new Error("That diary entry could not be found.");
   }
 }
